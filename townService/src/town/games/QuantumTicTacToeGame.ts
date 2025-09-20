@@ -75,7 +75,16 @@ export default class QuantumTicTacToeGame extends Game<
   }
 
   protected _leave(player: Player): void {
-    // TODO: implement me
+    this._games.A.leave(player);
+    this._games.B.leave(player);
+    this._games.C.leave(player);
+
+    this.state = {
+      ...this.state,
+      x: this._games.A.state.x,
+      o: this._games.A.state.o,
+      status: this._games.A.state.status,
+    };
   }
 
   /**

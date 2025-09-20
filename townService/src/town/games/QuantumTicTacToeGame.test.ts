@@ -1,5 +1,5 @@
 import { createPlayerForTesting } from '../../TestUtils';
-import { GAME_FULL_MESSAGE, PLAYER_ALREADY_IN_GAME_MESSAGE } from '../../lib/InvalidParametersError';
+import { GAME_FULL_MESSAGE, PLAYER_ALREADY_IN_GAME_MESSAGE, PLAYER_NOT_IN_GAME_MESSAGE } from '../../lib/InvalidParametersError';
 import Player from '../../lib/Player';
 import { GameMove } from '../../types/CoveyTownSocket';
 import QuantumTicTacToeGame from './QuantumTicTacToeGame';
@@ -57,18 +57,59 @@ describe('QuantumTicTacToeGame', () => {
   });
 
   describe('_leave', () => {
-    describe('when two players are in the game', () => {
-      beforeEach(() => {
-        game.join(player1);
-        game.join(player2);
-      });
-
-      it('should set the game to OVER and declare the other player the winner', () => {
-        game.leave(player1);
-        expect(game.state.status).toBe('OVER');
-        expect(game.state.winner).toBe(player2.id);
-      });
+    it('should throw an error if the player is not in the game', () => {
+      expect(() => game.leave(createPlayerForTesting())).toThrowError(PLAYER_NOT_IN_GAME_MESSAGE);
+      game.join(player1);
+      expect(() => game.leave(createPlayerForTesting())).toThrowError(PLAYER_NOT_IN_GAME_MESSAGE);
     });
+    describe('when the player is in the game', () => {
+      describe('when the game is in progress, it should set the game status to OVER and declare the other player the winner', () => {
+        test('when x leaves', () => {
+          game.join(player1);
+          game.join(player2);
+          expect(game.state.x).toEqual(player1.id);
+          expect(game.state.o).toEqual(player2.id);
+
+          game.leave(player1);
+
+          expect(game.state.status).toEqual('OVER');
+          expect(game.state.winner).toEqual(player2.id);
+          expect(game.state.moves).toHaveLength(0);
+
+          expect(game.state.x).toEqual(player1.id);
+          expect(game.state.o).toEqual(player2.id);
+        });
+        test('when o leaves', () => {
+          const player1 = createPlayerForTesting();
+          const player2 = createPlayerForTesting();
+          game.join(player1);
+          game.join(player2);
+          expect(game.state.x).toEqual(player1.id);
+          expect(game.state.o).toEqual(player2.id);
+
+          game.leave(player2);
+
+          expect(game.state.status).toEqual('OVER');
+          expect(game.state.winner).toEqual(player1.id);
+          expect(game.state.moves).toHaveLength(0);
+
+          expect(game.state.x).toEqual(player1.id);
+          expect(game.state.o).toEqual(player2.id);
+        });
+      });
+      it('when the game is not in progress, it should set the game status to WAITING_TO_START and remove the player', () => {
+        const player1 = createPlayerForTesting();
+        game.join(player1);
+        expect(game.state.x).toEqual(player1.id);
+        expect(game.state.o).toBeUndefined();
+        expect(game.state.status).toEqual('WAITING_TO_START');
+        expect(game.state.winner).toBeUndefined();
+        game.leave(player1);
+        expect(game.state.x).toBeUndefined();
+        expect(game.state.o).toBeUndefined();
+        expect(game.state.status).toEqual('WAITING_TO_START');
+        expect(game.state.winner).toBeUndefined();
+      });
   });
 
   describe('applyMove', () => {
