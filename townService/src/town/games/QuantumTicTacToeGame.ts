@@ -24,12 +24,54 @@ export default class QuantumTicTacToeGame extends Game<
 
   private _moveCount: number;
 
+  /**
+   * A QuantumTicTacToeGame is a Game that implements the rules of Kriegspiel Tic Tac Toe.
+   * @see https://www.smbc-comics.com/comic/tic
+   */
   public constructor() {
-    // TODO: implement me
+    let noMovesVisible = [
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+    ];
+    super({
+      status: 'WAITING_TO_START',
+      moves: [],
+      xScore: 0,
+      oScore: 0,
+      publiclyVisible: {
+        A: noMovesVisible,
+        B: noMovesVisible,
+        C: noMovesVisible,
+      },
+    });
+
+    this._games = { A: new TicTacToeGame(), B: new TicTacToeGame(), C: new TicTacToeGame() };
+    this._xScore = this.state.xScore;
+    this._oScore = this.state.oScore;
+    this._moveCount = this.state.moves.length;
   }
 
+  /**
+   * Adds a player to the game.
+   * Updates the game's state to reflect the new player.
+   * If the game is now full (has two players), updates the game's state to set the status to IN_PROGRESS.
+   *
+   * @param player The player to join the game
+   * @throws InvalidParametersError if the player is already in the game (PLAYER_ALREADY_IN_GAME_MESSAGE)
+   *  or the game is full (GAME_FULL_MESSAGE)
+   */
   protected _join(player: Player): void {
-    // TODO: implement me
+    this._games.A.join(player);
+    this._games.B.join(player);
+    this._games.C.join(player);
+
+    this.state = {
+      ...this.state,
+      x: this._games.A.state.x,
+      o: this._games.A.state.o,
+      status: this._games.A.state.status,
+    };
   }
 
   protected _leave(player: Player): void {

@@ -1,4 +1,5 @@
 import { createPlayerForTesting } from '../../TestUtils';
+import { GAME_FULL_MESSAGE, PLAYER_ALREADY_IN_GAME_MESSAGE } from '../../lib/InvalidParametersError';
 import Player from '../../lib/Player';
 import { GameMove } from '../../types/CoveyTownSocket';
 import QuantumTicTacToeGame from './QuantumTicTacToeGame';
@@ -15,11 +16,43 @@ describe('QuantumTicTacToeGame', () => {
   });
 
   describe('_join', () => {
-    it('should add the first player as X', () => {
+    it('should throw an error if the player is already in the game', () => {
       game.join(player1);
-      expect(game.state.x).toBe(player1.id);
-      expect(game.state.o).toBeUndefined();
-      expect(game.state.status).toBe('WAITING_TO_START');
+      expect(() => game.join(player1)).toThrowError(PLAYER_ALREADY_IN_GAME_MESSAGE);
+      game.join(player2);
+      expect(() => game.join(player2)).toThrowError(PLAYER_ALREADY_IN_GAME_MESSAGE);
+    });
+    it('should throw an error if the game is full', () => {
+      const player3 = createPlayerForTesting();
+      game.join(player1);
+      game.join(player2);
+
+      expect(() => game.join(player3)).toThrowError(GAME_FULL_MESSAGE);
+    });
+    describe('When the player can be added', () => {
+      it('makes the first player X and initializes the state with status WAITING_TO_START', () => {
+        game.join(player1);
+        expect(game.state.x).toEqual(player1.id);
+        expect(game.state.o).toBeUndefined();
+        expect(game.state.moves).toHaveLength(0);
+        expect(game.state.status).toEqual('WAITING_TO_START');
+        expect(game.state.winner).toBeUndefined();
+      });
+      describe('When the second player joins', () => {
+        beforeEach(() => {
+          game.join(player1);
+          game.join(player2);
+        });
+        it('makes the second player O', () => {
+          expect(game.state.x).toEqual(player1.id);
+          expect(game.state.o).toEqual(player2.id);
+        });
+        it('sets the game status to IN_PROGRESS', () => {
+          expect(game.state.status).toEqual('IN_PROGRESS');
+          expect(game.state.winner).toBeUndefined();
+          expect(game.state.moves).toHaveLength(0);
+        });
+      });
     });
   });
 
