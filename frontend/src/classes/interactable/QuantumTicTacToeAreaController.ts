@@ -150,8 +150,8 @@ export default class QuantumTicTacToeAreaController extends GameAreaController<
       newState.state.moves.forEach(move => {
         if (
           newBoards[move.board][move.row][move.col] === undefined &&
-          (newState.state.publiclyVisible[move.board][move.row][move.col]
-            || move.gamePiece == this.gamePiece)
+          (newState.state.publiclyVisible[move.board][move.row][move.col] ||
+            move.gamePiece == this.gamePiece)
         ) {
           newBoards[move.board][move.row][move.col] = move.gamePiece;
         }

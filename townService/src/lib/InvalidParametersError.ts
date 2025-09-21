@@ -9,6 +9,7 @@ export const GAME_ID_MISSMATCH_MESSAGE = 'Game ID mismatch';
 export const GAME_NOT_STARTABLE_MESSAGE = 'Game is not startable';
 
 export const BOARD_POSITION_NOT_EMPTY_MESSAGE = 'Board position is not empty';
+export const BOARD_IS_WON_MESSAGE = 'Board is won';
 export const MOVE_NOT_YOUR_TURN_MESSAGE = 'Not your turn';
 export const BOARD_POSITION_NOT_VALID_MESSAGE = 'Board position is not valid';
 

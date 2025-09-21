@@ -1,5 +1,9 @@
 import assert from 'assert';
-import InvalidParametersError, { GAME_ID_MISSMATCH_MESSAGE, GAME_NOT_IN_PROGRESS_MESSAGE, INVALID_COMMAND_MESSAGE } from '../../lib/InvalidParametersError';
+import InvalidParametersError, {
+  GAME_ID_MISSMATCH_MESSAGE,
+  GAME_NOT_IN_PROGRESS_MESSAGE,
+  INVALID_COMMAND_MESSAGE,
+} from '../../lib/InvalidParametersError';
 import Player from '../../lib/Player';
 import {
   GameInstance,
@@ -72,10 +76,7 @@ export default class QuantumTicTacToeGameArea extends GameArea<QuantumTicTacToeG
         'Invalid game piece',
       );
       const move = command.move as QuantumTicTacToeMove;
-      assert(
-        move.board === 'A' || move.board === 'B' || move.board == 'C',
-        'Invalid board',
-      );
+      assert(move.board === 'A' || move.board === 'B' || move.board === 'C', 'Invalid board');
       game.applyMove({
         gameID: command.gameID,
         playerID: player.id,

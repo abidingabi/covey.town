@@ -85,7 +85,7 @@ export default class TicTacToeGame extends Game<TicTacToeGameState, TicTacToeMov
     }
   }
 
-  private _validateMove(move: TicTacToeMove) {
+  _validateMove(move: TicTacToeMove) {
     // A move is valid if the space is empty
     for (const m of this.state.moves) {
       if (m.col === move.col && m.row === move.row) {
@@ -99,13 +99,27 @@ export default class TicTacToeGame extends Game<TicTacToeGameState, TicTacToeMov
     } else if (move.gamePiece === 'O' && this.state.moves.length % 2 === 0) {
       throw new InvalidParametersError(MOVE_NOT_YOUR_TURN_MESSAGE);
     }
+
     // A move is valid only if game is in progress
     if (this.state.status !== 'IN_PROGRESS') {
       throw new InvalidParametersError(GAME_NOT_IN_PROGRESS_MESSAGE);
     }
   }
 
-  private _applyMove(move: TicTacToeMove): void {
+  /*
+   * Applies a player's move to the game.
+   * Uses the player's ID to determine which game piece they are using (ignores move.gamePiece)
+   * Does not validates the move before applying it.
+   *
+   * If the move ends the game, updates the game's state.
+   * If the move results in a tie, updates the game's state to set the status to OVER and sets winner to undefined.
+   * If the move results in a win, updates the game's state to set the status to OVER and sets the winner to the player who made the move.
+   * A player wins if they have 3 in a row (horizontally, vertically, or diagonally).
+   *
+   * @param move The move to apply to the game
+   * @throws InvalidParametersError if the move is invalid
+   */
+  public applyMoveWithoutValidation(move: TicTacToeMove): void {
     this.state = {
       ...this.state,
       moves: [...this.state.moves, move],
@@ -147,7 +161,7 @@ export default class TicTacToeGame extends Game<TicTacToeGameState, TicTacToeMov
       row: move.move.row,
     };
     this._validateMove(cleanMove);
-    this._applyMove(cleanMove);
+    this.applyMoveWithoutValidation(cleanMove);
   }
 
   /**
