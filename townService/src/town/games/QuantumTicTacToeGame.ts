@@ -7,9 +7,8 @@ import Game from './Game';
 import TicTacToeGame from './TicTacToeGame';
 import Player from '../../lib/Player';
 import InvalidParametersError, {
-  BOARD_IS_WON_MESSAGE,
-  BOARD_POSITION_NOT_EMPTY_MESSAGE,
   GAME_NOT_IN_PROGRESS_MESSAGE,
+  INVALID_MOVE_MESSAGE,
   MOVE_NOT_YOUR_TURN_MESSAGE,
 } from '../../lib/InvalidParametersError';
 
@@ -25,8 +24,6 @@ export default class QuantumTicTacToeGame extends Game<
   private _games: { A: TicTacToeGame; B: TicTacToeGame; C: TicTacToeGame };
 
   private _won: { A: boolean; B: boolean; C: boolean };
-
-  private _moveCount: number;
 
   /**
    * A QuantumTicTacToeGame is a Game that implements the rules of Kriegspiel Tic Tac Toe.
@@ -67,7 +64,6 @@ export default class QuantumTicTacToeGame extends Game<
       B: false,
       C: false,
     };
-    this._moveCount = this.state.moves.length;
   }
 
   /**
@@ -121,13 +117,13 @@ export default class QuantumTicTacToeGame extends Game<
         m.row === move.move.row &&
         (m.gamePiece === move.move.gamePiece || this.state.publiclyVisible[m.board][m.row][m.col])
       ) {
-        throw new InvalidParametersError(BOARD_POSITION_NOT_EMPTY_MESSAGE);
+        throw new InvalidParametersError(INVALID_MOVE_MESSAGE);
       }
     }
 
-    // A move is only valid if the game is not over.
+    // A move is only valid if the game is not won.
     if (this._won[move.move.board]) {
-      throw new InvalidParametersError(BOARD_IS_WON_MESSAGE);
+      throw new InvalidParametersError(INVALID_MOVE_MESSAGE);
     }
 
     // A move is only valid if it is the player's turn
@@ -177,10 +173,6 @@ export default class QuantumTicTacToeGame extends Game<
       const board: 'A' | 'B' | 'C' = boardString as 'A' | 'B' | 'C';
       if (game.state.winner !== undefined && !this._won[board]) {
         this._won[board] = true;
-
-        for (const row of this.state.publiclyVisible[board]) {
-          for (let i = 0; i <= 2; i++) row[i] = true;
-        }
 
         if (game.state.winner === this.state.x) {
           this.state = {

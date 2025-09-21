@@ -1,6 +1,8 @@
 import { createPlayerForTesting } from '../../TestUtils';
 import {
   GAME_FULL_MESSAGE,
+  INVALID_MOVE_MESSAGE,
+  MOVE_NOT_YOUR_TURN_MESSAGE,
   PLAYER_ALREADY_IN_GAME_MESSAGE,
   PLAYER_NOT_IN_GAME_MESSAGE,
 } from '../../lib/InvalidParametersError';
@@ -143,7 +145,7 @@ describe('QuantumTicTacToeGame', () => {
     });
 
     describe('scoring and game end', () => {
-      it('should award a point when a player gets three-in-a-row', () => {
+      it('should award a point to X when X gets three in a row', () => {
         // X gets a win on board A
         makeMove(player1, 'A', 0, 0); // X
         makeMove(player2, 'B', 0, 0); // O
@@ -153,6 +155,177 @@ describe('QuantumTicTacToeGame', () => {
 
         expect(game.state.xScore).toBe(1);
         expect(game.state.oScore).toBe(0);
+      });
+
+      it('should award a point to O when O gets three in a row', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'B', 0, 0); // O
+        makeMove(player1, 'A', 0, 1); // X
+        makeMove(player2, 'B', 0, 1); // O
+        makeMove(player1, 'A', 1, 1); // X
+        makeMove(player2, 'B', 0, 2); // O -> scores 1 point
+
+        expect(game.state.xScore).toBe(0);
+        expect(game.state.oScore).toBe(1);
+      });
+
+      it('should error if it is not the turn of player 1', () => {
+        makeMove(player1, 'A', 0, 0);
+        expect(() => makeMove(player1, 'A', 0, 1)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+      });
+      it('should error if it is not the turn of player 2', () => {
+        expect(() => makeMove(player2, 'A', 0, 0)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+      });
+
+      it('should throw an error if a player tries to play on their own piece', () => {
+        makeMove(player1, 'A', 0, 0);
+        makeMove(player2, 'A', 0, 1);
+        expect(() => makeMove(player1, 'A', 0, 0)).toThrowError(INVALID_MOVE_MESSAGE);
+      });
+
+      it('should handle a collision by losing the turn of the second player', () => {
+        makeMove(player1, 'A', 0, 0);
+        makeMove(player2, 'A', 0, 0);
+        // @ts-expect-error - private property
+        expect(game._games.A._board[0][0]).toBe('X');
+        expect(game.state.moves.length).toBe(2);
+      });
+
+      it('should make a square publicly visible on collision', () => {
+        makeMove(player1, 'A', 0, 0);
+        makeMove(player2, 'A', 0, 0);
+        expect(game.state.publiclyVisible.A[0][0]).toBe(true);
+      });
+
+      it('should not allow moves on a board that has been won', () => {
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'B', 0, 0); // O
+        makeMove(player1, 'A', 0, 1); // X
+        makeMove(player2, 'B', 0, 1); // O
+        makeMove(player1, 'A', 0, 2); // X -> scores 1 point
+
+        expect(() => makeMove(player2, 'A', 2, 2)).toThrowError(INVALID_MOVE_MESSAGE);
+      });
+
+      it('should not repeatedly increment scores', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'B', 0, 0); // O
+        makeMove(player1, 'A', 0, 1); // X
+        makeMove(player2, 'B', 0, 1); // O
+        makeMove(player1, 'A', 0, 2); // X -> scores 1 point
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(0);
+
+        makeMove(player2, 'B', 0, 2); // O -> scores 1 point
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(1);
+
+        makeMove(player1, 'C', 0, 0);
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(1);
+      });
+
+      it('should end the game when all boards are full or won (tie)', () => {
+        // fill board A
+        makeMove(player1, 'A', 0, 1);
+        makeMove(player2, 'A', 0, 0);
+        makeMove(player1, 'A', 0, 2);
+        makeMove(player2, 'A', 1, 1);
+        makeMove(player1, 'A', 1, 0);
+        makeMove(player2, 'A', 1, 2);
+        makeMove(player1, 'A', 2, 0);
+        makeMove(player2, 'A', 2, 1);
+        makeMove(player1, 'A', 2, 2);
+
+        expect(game.state.status).toBe('IN_PROGRESS');
+
+        // have player 2 beat board B, player 1 beat board C
+        makeMove(player2, 'B', 0, 0);
+        makeMove(player1, 'C', 0, 0);
+        makeMove(player2, 'B', 0, 1);
+        makeMove(player1, 'C', 0, 1);
+        makeMove(player2, 'B', 0, 2); // player 2 wins board 2
+        expect(game.state.status).toBe('IN_PROGRESS');
+        makeMove(player1, 'C', 0, 2); // player 1 wins board 3
+
+        expect(game.state.status).toBe('OVER');
+        expect(game.state.winner === undefined);
+      });
+
+      it('should end the game when all boards are full or won (O wins)', () => {
+        // fill board A
+        makeMove(player1, 'A', 0, 1);
+        makeMove(player2, 'A', 0, 0);
+        makeMove(player1, 'A', 0, 2);
+        makeMove(player2, 'A', 1, 1);
+        makeMove(player1, 'A', 1, 0);
+        makeMove(player2, 'A', 1, 2);
+        makeMove(player1, 'A', 2, 0);
+        makeMove(player2, 'A', 2, 1);
+        makeMove(player1, 'A', 2, 2);
+
+        expect(game.state.status).toBe('IN_PROGRESS');
+
+        // have player 2 beat board B
+        makeMove(player2, 'B', 0, 0);
+        makeMove(player1, 'B', 1, 0);
+        makeMove(player2, 'B', 0, 1);
+        makeMove(player1, 'B', 1, 1);
+        makeMove(player2, 'B', 0, 2); // player 2 wins board 2
+
+        expect(game.state.status).toBe('IN_PROGRESS');
+
+        // and board C
+        makeMove(player1, 'C', 0, 0);
+        makeMove(player2, 'C', 1, 0);
+        makeMove(player1, 'C', 2, 1);
+        makeMove(player2, 'C', 1, 1);
+        makeMove(player1, 'C', 2, 2); // player 2 wins board 2
+        makeMove(player2, 'C', 1, 2);
+
+        expect(game.state.status).toBe('OVER');
+        expect(game.state.winner === player2.id);
+      });
+
+      it('should end the game when all boards are full or won (X wins)', () => {
+        // fill board A
+        makeMove(player1, 'A', 0, 1);
+        makeMove(player2, 'A', 0, 0);
+        makeMove(player1, 'A', 0, 2);
+        makeMove(player2, 'A', 1, 1);
+        makeMove(player1, 'A', 1, 0);
+        makeMove(player2, 'A', 1, 2);
+        makeMove(player1, 'A', 2, 0);
+        makeMove(player2, 'A', 2, 1);
+        makeMove(player1, 'A', 2, 2);
+
+        expect(game.state.status).toBe('IN_PROGRESS');
+
+        // have player 1 beat board B
+        makeMove(player2, 'B', 0, 0);
+        makeMove(player1, 'B', 1, 0);
+        makeMove(player2, 'B', 0, 1);
+        makeMove(player1, 'B', 1, 1);
+        makeMove(player2, 'B', 2, 2); // player 2 wins board 2
+        makeMove(player1, 'B', 1, 2);
+
+        expect(game.state.status).toBe('IN_PROGRESS');
+
+        // and board C
+        makeMove(player2, 'C', 0, 0);
+        makeMove(player1, 'C', 1, 0);
+        makeMove(player2, 'C', 0, 1);
+        makeMove(player1, 'C', 1, 1);
+        makeMove(player2, 'C', 2, 2); // player 2 wins board 2
+        makeMove(player1, 'C', 1, 2);
+
+        expect(game.state.status).toBe('OVER');
+        expect(game.state.winner === player1.id);
       });
     });
   });

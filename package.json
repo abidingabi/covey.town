@@ -46,7 +46,6 @@
         "frontend/src/classes/interactable/QuantumTicTacToeAreaController.ts",
         "frontend/src/components/Town/interactables/TicTacToe/QuantumTicTacToeArea.tsx",
         "frontend/src/components/Town/interactables/TicTacToe/QuantumTicTacToeBoard.tsx",
-        "townService/src/lib/InvalidParametersError.ts",
         "townService/src/town/games/QuantumTicTacToeGame.test.ts",
         "townService/src/town/games/QuantumTicTacToeGame.ts",
         "townService/src/town/games/QuantumTicTacToeGameArea.ts",
