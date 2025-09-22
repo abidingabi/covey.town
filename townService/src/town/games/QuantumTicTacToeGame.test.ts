@@ -1,6 +1,7 @@
 import { createPlayerForTesting } from '../../TestUtils';
 import {
   GAME_FULL_MESSAGE,
+  GAME_NOT_IN_PROGRESS_MESSAGE,
   INVALID_MOVE_MESSAGE,
   MOVE_NOT_YOUR_TURN_MESSAGE,
   PLAYER_ALREADY_IN_GAME_MESSAGE,
@@ -172,10 +173,14 @@ describe('QuantumTicTacToeGame', () => {
 
       it('should error if it is not the turn of player 1', () => {
         makeMove(player1, 'A', 0, 0);
-        expect(() => makeMove(player1, 'A', 0, 1)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+        makeMove(player2, 'A', 0, 0);
+        makeMove(player1, 'A', 0, 1);
+        expect(() => makeMove(player1, 'A', 0, 2)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
       });
       it('should error if it is not the turn of player 2', () => {
-        expect(() => makeMove(player2, 'A', 0, 0)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+        makeMove(player1, 'A', 0, 0);
+        makeMove(player2, 'A', 0, 0);
+        expect(() => makeMove(player2, 'A', 0, 1)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
       });
 
       it('should throw an error if a player tries to play on their own piece', () => {
@@ -327,6 +332,224 @@ describe('QuantumTicTacToeGame', () => {
         expect(game.state.status).toBe('OVER');
         expect(game.state.winner === player1.id);
       });
+
+      it('does not publish board on victory ', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 0, 1); // X
+        makeMove(player2, 'A', 0, 1); // O
+        makeMove(player1, 'A', 0, 2); // X -> scores 1 point
+
+        expect(game.state.publiclyVisible.A[0][0]).toBe(true);
+        expect(game.state.publiclyVisible.A[0][1]).toBe(true);
+        expect(game.state.publiclyVisible.A[0][2]).toBe(false);
+
+        for (let row = 1; row <= 2; row++) {
+          for (let col = 0; col <= 2; col++) {
+            expect(game.state.publiclyVisible.A[row][col]).toBe(false);
+          }
+        }
+
+        for (let row = 0; row <= 2; row++) {
+          for (let col = 0; col <= 2; col++) {
+            expect(game.state.publiclyVisible.B[row][col]).toBe(false);
+            expect(game.state.publiclyVisible.C[row][col]).toBe(false);
+          }
+        }
+      });
+
+      it('should detect a - win for X', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 0, 1); // X
+        makeMove(player2, 'A', 0, 1); // O
+        makeMove(player1, 'A', 0, 2); // X -> scores 1 point
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(0);
+      });
+
+      it('should detect a | win for X', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 1, 0); // X
+        makeMove(player2, 'A', 1, 0); // O
+        makeMove(player1, 'A', 2, 0); // X -> scores 1 point
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(0);
+      });
+
+      it('should detect a \\ win for X', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 1, 1); // X
+        makeMove(player2, 'A', 1, 1); // O
+        makeMove(player1, 'A', 2, 2); // X -> scores 1 point
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(0);
+      });
+
+      it('should detect a / win for X', () => {
+        // X gets a win on board A
+        makeMove(player1, 'A', 2, 0); // X
+        makeMove(player2, 'A', 2, 0); // O
+        makeMove(player1, 'A', 1, 1); // X
+        makeMove(player2, 'A', 1, 1); // O
+        makeMove(player1, 'A', 0, 2); // X -> scores 1 point
+
+        expect(game.state.xScore).toBe(1);
+        expect(game.state.oScore).toBe(0);
+      });
+
+      it('should detect a - win for O', () => {
+        // O gets a win on board A
+        makeMove(player1, 'B', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 0, 1); // O
+        makeMove(player1, 'A', 0, 1); // X
+        makeMove(player2, 'A', 0, 2); // O -> scores 1 point
+
+        expect(game.state.xScore).toBe(0);
+        expect(game.state.oScore).toBe(1);
+      });
+
+      it('should detect a | win for O', () => {
+        // X gets a win on board A
+        makeMove(player1, 'B', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 1, 0); // O
+        makeMove(player1, 'A', 1, 0); // X
+        makeMove(player2, 'A', 2, 0); // O -> scores 1 point
+
+        expect(game.state.xScore).toBe(0);
+        expect(game.state.oScore).toBe(1);
+      });
+
+      it('should detect a \\ win for O', () => {
+        // X gets a win on board A
+        makeMove(player1, 'B', 0, 0); // X
+        makeMove(player2, 'A', 0, 0); // O
+        makeMove(player1, 'A', 0, 0); // X
+        makeMove(player2, 'A', 1, 1); // O
+        makeMove(player1, 'A', 1, 1); // X
+        makeMove(player2, 'A', 2, 2); // O -> scores 1 point
+
+        expect(game.state.xScore).toBe(0);
+        expect(game.state.oScore).toBe(1);
+      });
+
+      it('should detect a / win for O', () => {
+        // X gets a win on board A
+        makeMove(player1, 'B', 0, 0); // X
+        makeMove(player2, 'A', 2, 0); // O
+        makeMove(player1, 'A', 2, 0); // X
+        makeMove(player2, 'A', 1, 1); // O
+        makeMove(player1, 'A', 1, 1); // X
+        makeMove(player2, 'A', 0, 2); // O -> scores 1 point
+
+        expect(game.state.xScore).toBe(0);
+        expect(game.state.oScore).toBe(1);
+      });
+    });
+
+    it('should throw an error if the game is not in progress', () => {
+      game.leave(player2);
+      expect(() => makeMove(player1, 'A', 0, 0)).toThrowError(GAME_NOT_IN_PROGRESS_MESSAGE);
+    });
+
+    it('should rely on the player ID to determine whose turn it is', () => {
+      expect(() =>
+        game.applyMove({
+          gameID: game.id,
+          playerID: player2.id,
+          move: {
+            board: 'A',
+            row: 0,
+            col: 0,
+            gamePiece: 'X',
+          },
+        }),
+      ).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+
+      expect(() =>
+        game.applyMove({
+          gameID: game.id,
+          playerID: player1.id,
+          move: {
+            board: 'A',
+            row: 0,
+            col: 0,
+            gamePiece: 'O',
+          },
+        }),
+      ).not.toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+
+      // @ts-expect-error - private property
+      expect(game._games.A._board[0][0]).toBe('X');
+    });
+
+    it('should throw an error if the move is out of turn for the player ID', () => {
+      expect(() =>
+        game.applyMove({
+          gameID: game.id,
+          playerID: player2.id,
+          move: {
+            board: 'A',
+            row: 0,
+            col: 0,
+            gamePiece: 'X',
+          },
+        }),
+      ).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+
+      makeMove(player1, 'A', 0, 0);
+
+      expect(() =>
+        game.applyMove({
+          gameID: game.id,
+          playerID: player1.id,
+          move: {
+            board: 'A',
+            row: 0,
+            col: 1,
+            gamePiece: 'O',
+          },
+        }),
+      ).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+
+      makeMove(player2, 'A', 0, 2);
+
+      expect(() =>
+        game.applyMove({
+          gameID: game.id,
+          playerID: player2.id,
+          move: {
+            board: 'B',
+            row: 0,
+            col: 1,
+            gamePiece: 'X',
+          },
+        }),
+      ).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+
+      // @ts-expect-error - private property
+      expect(game._games.A._board[0][0]).toBe('X');
+    });
+
+    it('should not change whose turn it is when an invalid move is made', () => {
+      makeMove(player1, 'A', 0, 0);
+      expect(() => makeMove(player1, 'A', 0, 1)).toThrowError(MOVE_NOT_YOUR_TURN_MESSAGE);
+      expect(game.state.moves).toHaveLength(1);
+      makeMove(player2, 'B', 0, 0);
+      expect(game.state.moves).toHaveLength(2);
     });
   });
 });

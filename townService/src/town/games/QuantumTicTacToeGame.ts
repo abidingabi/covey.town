@@ -139,7 +139,14 @@ export default class QuantumTicTacToeGame extends Game<
     }
   }
 
-  public applyMove(move: GameMove<QuantumTicTacToeMove>): void {
+  public applyMove(rawMove: GameMove<QuantumTicTacToeMove>): void {
+    const move: GameMove<QuantumTicTacToeMove> = {
+      ...rawMove,
+      move: {
+        ...rawMove.move,
+        gamePiece: rawMove.playerID === this.state.x ? 'X' : 'O',
+      },
+    };
     this._validateMove(move);
 
     let isCollision = false;
